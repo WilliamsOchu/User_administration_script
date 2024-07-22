@@ -92,9 +92,8 @@ else
     echo /var/log/commands.log > /etc/logrotate.d/syslog
     sudo sudo service rsyslog restart 
     ln -s /var/log/commands.log /var/log/user_management.log
+    echo User: $extract_users Succesfully Created  !!! 
     #echo "done"
 fi
 
 done < $1
-
-echo Users Succesfully Created  !!! 
