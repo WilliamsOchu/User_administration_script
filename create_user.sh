@@ -8,11 +8,30 @@
 
 # Usage: Run this script while passing the txt file containing the users and groups to be created as a command line argument. Kindly note each line of the txt file must end with a comma
 
-# Check for root privileges
+## Check for root privileges
 if [ ! $(id -u) = 0 ]; then
   echo "Script must be run as root"
   exit 1
 fi
+
+## Lets create a file where the script logs will be sent to 
+LOGFILE="/var/log/user_management.log"
+
+if test -f "$LOGFILE"; then
+    echo file exists > /dev/null
+else
+    sudo touch "$LOGFILE"
+fi
+
+# Redirect stdout (file descriptor 1) to the log file
+exec > >(tee -a $LOGFILE > /dev/null) 
+
+# Redirect stderr (file descriptor 2) to the log file
+exec 2> >(tee -a $LOGFILE >&2 > /dev/null)
+
+# Log each command being executed (useful for debugging)
+set -x
+
 
 ## Lets create the directory where passwords will be stored
 passdir="/var/secure"
@@ -21,6 +40,7 @@ if [ -d "$passdir" ]; then
 else
     sudo mkdir /var/secure
 fi
+
 
 ## Lets initiate a loop to kickstart the creation process
 while read -r line; do
@@ -69,9 +89,9 @@ grpstr=${grptostr// /,}
 
 ## Lets initiate variables for user random password
 tmp_pass=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n 1)
-userwithpass="$extract_users: $tmp_pass"
+userwithpass="$extract_users,$tmp_pass"
 #echo $tmp_pass
-echo $userwithpass >> /var/secure/user_passwords.txt
+echo $userwithpass >> /var/secure/user_passwords.csv
 
 
 ## Let us proceed to chceck if the user exists and create user if it does not exist 
@@ -82,18 +102,8 @@ else
     echo "$extract_users : user created." >> /var/secure/created_users.txt
 fi
 
-## Let us proceed to log all actions of the user
-if test -f /var/log/commands.log; then
-    echo "Commands are being logged" > /dev/null
-else
-    echo export PROMPT_COMMAND='RETRN_VAL=$?;logger -p local6.debug "$(whoami) [$$]: $(history 1 | sed "s/^[ ]*[0-9]\+[ ]*//" )"' > /etc/bashrc
-    source /etc/bashrc
-    echo local6.*    /var/log/commands.log > /etc/rsyslog.d/bash.conf
-    echo /var/log/commands.log > /etc/logrotate.d/syslog
-    sudo sudo service rsyslog restart 
-    ln -s /var/log/commands.log /var/log/user_management.log
-    echo User: $extract_users Succesfully Created  !!! 
-    #echo "done"
-fi
-
 done < $1
+
+## Permit access to the passwords file to only the owner
+sudo chmod 700 /var/secure/user_passwords.csv
+echo "Done"
