@@ -1,5 +1,9 @@
-willy;cloud 
-anne;cloud
-john;dev
-glory;dev
-favour:security
+willys;cloud,devops,AI,
+anne;cloud,architect,
+jolly;dev,devops,
+glory;dev,web3,
+favour;security,linux,
+blings;3D,autodesk,
+praise;video,3D,autodesk,
+akan;3D,blender,nft,
+boniface;blender,maya,shelter,
